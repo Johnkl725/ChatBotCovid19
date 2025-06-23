@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVI-ALERT - Asistente COVID-19</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message.bot .message-content {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.user .message-content {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .bot .avatar {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .user .avatar {
+            background: #667eea;
+            color: white;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .message-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .send-button:hover {
+            background: #5a6fd8;
+        }
+
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .quick-actions {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-action:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .status-bar {
+            background: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .whatsapp-info {
+            background: #25d366;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        .whatsapp-info h3 {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .chat-container {
+                height: 400px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+
+        .risk-level {
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .risk-critical {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .risk-moderate {
+            background: #fff3e0;
+            color: #ef6c00;
+            border-left: 4px solid #ef6c00;
+        }
+
+        .risk-low {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦠 COVI-ALERT</h1>
+            <p>Tu asistente inteligente para evaluación preventiva de COVID-19</p>
+        </div>
+
+        <div class="status-bar">
+            ✅ Conectado - Listo para ayudarte
+        </div>
+
+        <div class="whatsapp-info">
+            <h3>📱 También disponible en WhatsApp</h3>
+            <p>Configura tu webhook para usar este chatbot en WhatsApp Business API</p>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot">
+                <div class="avatar">🤖</div>
+                <div class="message-content">
+                    ¡Hola 👋! Soy COVI-ALERT 🦠🔍, tu asistente para evaluación preventiva de COVID-19.<br><br>
+                    📌 Analizaré tus síntomas en 2 minutos y te diré:<br>
+                    ✓ Nivel de riesgo (✅🟠🔴)<br>
+                    ✓ Recomendaciones personalizadas<br>
+                    ✓ Alertas tempranas<br><br>
+                    ¿Comenzamos?
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            🤖 COVI-ALERT está escribiendo...
+        </div>
+
+        <div class="quick-actions" id="quickActions">
+            <div class="quick-action" onclick="sendQuickMessage('Sí, evaluarme')">🟢 Sí, evaluarme</div>
+            <div class="quick-action" onclick="sendQuickMessage('Ayuda')">❓ Ayuda</div>
+            <div class="quick-action" onclick="sendQuickMessage('Reiniciar')">🔄 Reiniciar</div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-group">
+                <input type="text" class="message-input" id="messageInput" placeholder="Escribe tu mensaje aquí..." onkeypress="handleKeyPress(event)">
+                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationState = 'welcome';
+        let userData = {};
+        let isProcessing = false;
+
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const quickActions = document.getElementById('quickActions');
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        }
+
+        function sendQuickMessage(message) {
+            if (!isProcessing) {
+                messageInput.value = message;
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isProcessing) return;
+
+            isProcessing = true;
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+
+            // Mostrar mensaje del usuario
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            // Mostrar indicador de escritura
+            showTyping();
+
+            try {
+                // Simular procesamiento del chatbot
+                const response = await processMessage(message);
+                
+                // Ocultar indicador de escritura
+                hideTyping();
+                
+                // Mostrar respuesta del bot
+                addMessage(response.text, 'bot', response.riskLevel);
+                
+                // Actualizar acciones rápidas
+                updateQuickActions(response.quickActions);
+                
+            } catch (error) {
+                hideTyping();
+                addMessage('Lo siento, ocurrió un error. Por favor, intenta de nuevo.', 'bot');
+            }
+
+            isProcessing = false;
+            sendButton.disabled = false;
+            messageInput.disabled = false;
+            messageInput.focus();
+        }
+
+        function addMessage(text, sender, riskLevel = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            let content = `
+                <div class="avatar">${sender === 'bot' ? '🤖' : '👤'}</div>
+                <div class="message-content">
+            `;
+            
+            if (riskLevel) {
+                content += `<div class="risk-level risk-${riskLevel.toLowerCase()}">${text}</div>`;
+            } else {
+                content += text.replace(/\n/g, '<br>');
+            }
+            
+            content += '</div>';
+            messageDiv.innerHTML = content;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
+        function updateQuickActions(actions) {
+            if (!actions) return;
+            
+            quickActions.innerHTML = '';
+            actions.forEach(action => {
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'quick-action';
+                actionDiv.textContent = action.text;
+                actionDiv.onclick = () => sendQuickMessage(action.value);
+                quickActions.appendChild(actionDiv);
+            });
+        }
+
+        async function processMessage(message) {
+            // Simular delay de procesamiento
+            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    state: conversationState,
+                    userData: userData
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error en la comunicación con el servidor');
+            }
+
+            const data = await response.json();
+            
+            // Actualizar estado de la conversación
+            conversationState = data.state;
+            userData = data.userData;
+
+            return data;
+        }
+
+        // Inicializar acciones rápidas
+        updateQuickActions([
+            { text: '🟢 Sí, evaluarme', value: '1' },
+            { text: '🔴 No, gracias', value: '2' },
+            { text: '❓ Ayuda', value: 'ayuda' }
+        ]);
+
+        // Enfocar el input al cargar
+        messageInput.focus();
+    </script>
+</body>
+</html>
+
